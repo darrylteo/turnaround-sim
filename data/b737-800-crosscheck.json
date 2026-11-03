@@ -1,0 +1,25 @@
+{
+  "aircraft": "737-800",
+  "scenario": "Turnaround station, one passenger bridge, one door",
+  "source": "ACAP-737NG §5.2.4",
+  "use": "cross-check only: the generator must also respect precedence on this table",
+  "assumptions": { "pax": 162, "deplane_rate_pax_per_min": 18, "board_rate_pax_per_min": 12, "belt_loaders": 2, "fuel_us_gal": 6875, "galley_trucks": 1, "lav_trucks": 1 },
+  "target_trt_min": 37.5,
+  "tasks": [
+    { "id": "pbb_dock",   "duration": 2.0,  "start": 0,    "read": "chart" },
+    { "id": "deplane",    "duration": 9.0,  "start": 2,    "after": ["pbb_dock"], "read": "stated" },
+    { "id": "cabin",      "duration": 11.0, "start": 10.5, "after": ["deplane"], "read": "stated", "note": "in available time" },
+    { "id": "fwd_galley", "duration": 4.0,  "start": 10.5, "after": ["deplane"], "read": "stated" },
+    { "id": "aft_galley", "duration": 5.0,  "start": 18,   "after": ["fwd_galley"], "same_vehicle_as": "fwd_galley", "read": "stated" },
+    { "id": "board",      "duration": 13.5, "start": 23.5, "after": ["aft_galley", "cabin", "fuel"], "read": "stated" },
+    { "id": "pbb_remove", "duration": 1.0,  "start": 36.5, "after": ["board"], "read": "stated" },
+    { "id": "aft_unload", "duration": 5.4,  "start": 2,    "read": "stated" },
+    { "id": "fwd_unload", "duration": 8.2,  "start": 5.6,  "read": "stated" },
+    { "id": "bulk",       "duration": 34.5, "start": 2,    "read": "stated", "note": "available time window" },
+    { "id": "fwd_load",   "duration": 12.6, "start": 14,   "after": ["fwd_unload"], "read": "stated" },
+    { "id": "aft_load",   "duration": 8.4,  "start": 21.5, "after": ["aft_unload"], "read": "stated" },
+    { "id": "fuel",       "duration": 16.2, "start": 3,    "read": "stated" },
+    { "id": "lavatory",   "duration": 5.0,  "start": 12,   "read": "stated" },
+    { "id": "potable",    "duration": 5.0,  "start": 3,    "read": "stated" }
+  ]
+}
