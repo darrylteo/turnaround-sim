@@ -1,0 +1,14 @@
+{
+  "name": "turnaround-sim",
+  "version": "0.1.0",
+  "description": "Browser game of an aircraft turnaround with synthetic GSE traffic, plus a marker for human eval verdicts",
+  "type": "module",
+  "license": "MIT",
+  "private": true,
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test \"evals/**/*.test.js\"",
+    "leak": "node scripts/leak-check.mjs",
+    "serve": "node scripts/serve.mjs"
+  }
+}
