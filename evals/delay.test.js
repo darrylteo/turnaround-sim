@@ -71,9 +71,10 @@ test('delay inside slack (fuel, 2.6 min spare) does not move off-block', () => {
   finish(base);
   const w = world(s, { rerouteAfter: Infinity });
   const id = typeId(s, 'FUEL');
-  block(w, id, 60);
+  block(w, id, 25);                 // short enough that the catering truck 30 s behind is not held too
   finish(w);
-  assert.ok(arrivalOf(w, id).late > 30);
+  assert.ok(arrivalOf(w, id).late > 20);
+  assert.deepEqual(w.delay.arrivals.filter((a) => a.late > 0).map((a) => a.vehicle), [id], 'only the fuel truck should lose time');
   assert.ok(Math.abs(w.turns[0].offBlock - base.turns[0].offBlock) <= 0.5);
 });
 

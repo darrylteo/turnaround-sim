@@ -1,7 +1,8 @@
 // Eval 5: the player's vehicle stays inside its handling limits.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createPlayer, stepPlayer, LIMITS } from '../src/sim/player.js';
+import { createPlayer, stepPlayer, playerRect, LIMITS } from '../src/sim/player.js';
+import { rect, overlap } from '../src/sim/geom.js';
 import { stand, cleanSchedule, world, dist } from './helpers.js';
 
 const env = { stand, obstacles: [] };
@@ -36,12 +37,13 @@ test('acceleration and braking are capped', () => {
   }
 });
 
-test('turning radius is never tighter than the minimum', () => {
+test('turning radius is never tighter than the minimum (except the slow turn on the spot)', () => {
   const p = open();
   for (const { prev, p: q } of drive(p, { throttle: 1, steer: 1 }, 20)) {
     const dh = Math.abs(Math.atan2(Math.sin(q.h - prev.h), Math.cos(q.h - prev.h)));
     const ds = dist(q, prev);
-    if (dh > 1e-6) assert.ok(ds / dh >= LIMITS.minTurnRadius - 0.1, `radius ${(ds / dh).toFixed(2)} m`);
+    if (dh > 1e-6 && Math.abs(q.v) >= LIMITS.pivotBelow) assert.ok(ds / dh >= LIMITS.minTurnRadius - 0.1, `radius ${(ds / dh).toFixed(2)} m`);
+    if (Math.abs(q.v) < LIMITS.pivotBelow) assert.ok(dh <= LIMITS.pivotRate / 60 + 1e-9, 'turns on the spot too fast');
   }
 });
 
@@ -56,10 +58,11 @@ test('the player cannot drive into the aircraft', () => {
 
 test('the player cannot drive into another vehicle', () => {
   const p = open();
-  const obstacles = [{ x: p.x + 20, y: p.y, r: LIMITS.vehicleRadius }];
+  const obstacles = [{ id: 'truck', poly: rect(p.x + 20, p.y, Math.PI / 2, 7, 2.5) }];
   for (const { p: q } of drive(p, { throttle: 1, steer: 0 }, 20, 1 / 60, { stand, obstacles })) {
-    assert.ok(dist(q, obstacles[0]) >= 2 * LIMITS.vehicleRadius - 0.05);
+    assert.ok(!overlap(playerRect(q), obstacles[0].poly), `overlaps the truck at ${q.x.toFixed(2)}`);
   }
+  assert.equal(p.hit, 'truck');
 });
 
 test('the player stays inside the stand', () => {

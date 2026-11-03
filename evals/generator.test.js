@@ -5,7 +5,12 @@ import { generate } from '../src/sim/generator.js';
 import { A320, B738, MIN, SEEDS, stand, byKey, cleanSchedule } from './helpers.js';
 
 const EPS = 1e-6;
-const gen = (seed, opts = {}) => generate({ table: A320, stand, seed, ...opts });
+const memo = new Map();   // the tests only read schedules, so each seed is generated once
+const gen = (seed, opts = {}) => {
+  const k = `${seed}:${JSON.stringify(opts)}`;
+  if (!memo.has(k)) memo.set(k, generate({ table: A320, stand, seed, ...opts }));
+  return memo.get(k);
+};
 
 function assertPrecedence(schedule) {
   for (const turn of schedule.turns) {
@@ -103,8 +108,9 @@ test('no vehicle at the aircraft before chocks on or after off-blocks', () => {
 });
 
 test('generator is deterministic per seed', () => {
-  assert.deepEqual(gen(42), gen(42));
-  assert.notDeepEqual(gen(1), gen(2));
+  const fresh = (seed) => generate({ table: A320, stand, seed });   // not the memo: two separate runs
+  assert.deepEqual(fresh(42), fresh(42));
+  assert.notDeepEqual(fresh(1), fresh(2));
 });
 
 test('noise stays plausible', () => {

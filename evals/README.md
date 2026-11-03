@@ -1,6 +1,6 @@
 # Evals
 
-These evals were written before the features they test. They run headless with
+These evals were written before the features they test (see the git history). A few changed while the features were built. The walk evals were added with the 3D game, before the walker. The turn-radius check now allows the deliberate slow turn on the spot. Obstacles became polygons. The fuel-slack check blocks for 25 s instead of 60, so it no longer also holds up the catering truck behind. They run headless with
 `npm test` (Node's built-in test runner, no dependencies) and on every push in
 CI.
 
@@ -13,6 +13,7 @@ CI.
 | `handling.test.js` | **Handling limits.** Top speed, reverse speed, acceleration, braking and turn radius are capped. You can't drive into the aircraft, into another vehicle or off the stand. Physics is the same at 30 and 120 fps, and junk input can't produce NaN. Speeding inside the aircraft safety area is flagged. |
 | `marker.test.js` | **Mark mode.** There are three fixed verdicts (`valid`, `false_alarm`, `unsure`). The export holds every detector event (unmarked ones have `verdict: null`) plus human flags. It is sorted, a second verdict replaces the first, bad input is rejected, and it survives a JSON round trip. |
 | `loop.test.js` | **Demo loop.** The aircraft is on blocks during each turn and gone mid-gap, and the stand is empty between turns. Passing `loopEnd` restarts the replay, resets the counter and keeps the event log. Untouched loops play out identically. |
+| `walk.test.js` | **Walking and jumping.** Walk and run speeds are right, and walking diagonally is no faster. Q and E turn at the set rate. A jump peaks at v²/2g and lands after 2v/g, with no second jump in mid-air and a landing dip. You can't walk through the aircraft, a vehicle driving at you pushes you aside, and you stay on the stand. Added with the 3D game, before the walker. |
 | `leak.test.js` | **Leak check.** No tracked file or commit message contains a banned term. Terms are stored only as SHA-256 hashes of lower-cased words, phrases and joined spellings. |
 
 ## Module contract these evals pin down

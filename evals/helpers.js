@@ -23,8 +23,7 @@ export const world = (schedule, opts = {}) => createWorld(schedule, { stand, ...
 
 // Step until pred(world) is true or maxT (sim seconds) passes. Returns true if pred hit.
 export function runUntil(w, pred, { dt = 0.25, maxT = Infinity, input } = {}) {
-  const stop = w.t + maxT;
-  while (w.t < stop) {
+  for (let elapsed = 0; elapsed < maxT; elapsed += dt) {   // elapsed, not w.t: the clock wraps when the loop restarts
     if (pred(w)) return true;
     w.step(dt, input);
   }

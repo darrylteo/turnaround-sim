@@ -1,3 +1,4 @@
 node_modules/
 leak-terms.local.txt
 .DS_Store
+.frames/

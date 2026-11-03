@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Turnaround Sim</title>
+<meta name="description" content="A browser game of two A320 turnarounds at a fictional contact stand, with synthetic ground vehicles that wait and reroute round you, and a marker for human eval verdicts.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%232997ff'/%3E%3Cpath d='M16 6l3 8h7l-6 4 2 8-6-5-6 5 2-8-6-4h7z' fill='%23fff'/%3E%3C/svg%3E">
+<script>window.CESIUM_BASE_URL = 'https://cdn.jsdelivr.net/npm/cesium@1.144.0/Build/Cesium/';</script>
+<script src="https://cdn.jsdelivr.net/npm/cesium@1.144.0/Build/Cesium/Cesium.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cesium@1.144.0/Build/Cesium/Widgets/widgets.css">
+<link rel="stylesheet" href="vendor/fonts.css">
+<link rel="stylesheet" href="src/app/app.css">
+</head>
+<body data-mode="orbit">
+<div id="scene"></div>
+<div id="labels"></div>
+
+<header class="glass" id="top">
+  <div class="where"><span class="k">Stand 7 · fictional</span><span class="v">Turnaround</span></div>
+  <div class="when"><span class="clock" id="clock">--:--:--</span><span class="day" id="day">synthetic day</span></div>
+  <div class="ac"><span class="k">Aircraft</span><span class="v" id="acname">Stand empty</span><span class="p" id="acphase"></span></div>
+  <div class="selbox" id="selbox" hidden><span class="k">Selected</span><span class="v" id="sel"></span></div>
+  <div class="stat"><span class="n" id="delay">0 s</span><span class="k">delay you caused</span></div>
+  <div class="stat"><span class="n" id="score">–</span><span class="k" id="scorek">on-time score</span></div>
+</header>
+
+<aside class="glass" id="legend">
+  <button class="fold" data-toggle="legend" title="Fold the legend (L)">Legend <kbd>L</kbd></button>
+  <div class="roles" id="roles"></div>
+  <ul class="honest">
+    <li><b>Stand</b> fictional; roads, bays and spots are our layout</li>
+    <li><b>Schedule</b> synthetic, from the A320 airport planning manual's turn-round chart, with noise and late vehicles</li>
+    <li><b>Aircraft</b> A320 model from FlightGear via Flightradar24 (GPLv2), scaled to the manual's length</li>
+    <li><b>Haloed</b> waiting for or rerouting round you</li>
+    <li><b>Red</b> a separation conflict</li>
+    <li><b>Speeds</b> 15 km/h replay, 25 km/h cap for you (assumed)</li>
+  </ul>
+</aside>
+
+<canvas id="minimap" width="440" height="440" aria-label="Mini-map of the stand"></canvas>
+
+<div id="card" class="glass"></div>
+<div id="hud" class="glass" aria-live="polite"></div>
+<button id="uncine" class="glass" title="Show the panels again (C)">Show UI <kbd>C</kbd></button>
+
+<footer class="glass" id="bar">
+  <div class="ctrls">
+    <button id="play" title="Play or pause (Space)">&#10074;&#10074;</button>
+    <div class="speeds" id="speeds"></div>
+    <div class="views" id="views"></div>
+    <div class="modes" id="modes">
+      <button data-m="follow" disabled title="Follow the selected vehicle (F)">Follow <kbd>F</kbd></button>
+      <button data-m="drive" title="Drive your baggage tractor (E)">Drive <kbd>E</kbd></button>
+      <button data-m="walk" title="Walk from the centre of the view (X)">Walk <kbd>X</kbd></button>
+    </div>
+    <button id="flagbtn" title="Flag this moment for the eval set (N)">Flag <kbd>N</kbd></button>
+    <button id="exportbtn" title="Download every event and verdict as JSON">Export marks</button>
+    <button id="cine" title="Hide every panel for a clean view (C)">Hide UI <kbd>C</kbd></button>
+    <button id="helpbtn" data-toggle="help" title="Keys and modes (H)">? <kbd>H</kbd></button>
+  </div>
+  <div id="timeline">
+    <canvas id="spark" height="44"></canvas>
+    <div id="flights"></div>
+    <div id="hours"></div>
+    <div id="marks-ticks"></div>
+    <div id="head"></div>
+    <div id="hover"></div>
+  </div>
+  <div class="hint" id="hint">Space plays · E drives your tractor and blocks the traffic · X walks, Space jumps · mark events on the right · H for all keys</div>
+</footer>
+
+<aside id="marks" class="glass">
+  <button class="fold" data-toggle="marks" title="Fold the events (K)">Mark mode · events <span id="markcount">0</span> <kbd>K</kbd></button>
+  <p class="sub">Give each detector event a verdict, or flag what it missed. Export makes the eval set.</p>
+  <ul id="marklist"></ul>
+</aside>
+
+<div id="markbox" class="glass" hidden>
+  <div class="k" id="mk-title">Flag this moment</div>
+  <div class="what"><b id="mk-what"></b> <span id="mk-when"></span></div>
+  <textarea id="mk-note" rows="3" placeholder="What did the detector miss? Enter saves, Esc cancels"></textarea>
+  <div class="row"><button id="mk-save" class="on">Save <kbd>Enter</kbd></button><button id="mk-cancel">Cancel <kbd>Esc</kbd></button></div>
+</div>
+
+<div id="help" class="glass" hidden>
+  <h2>Modes and keys</h2>
+  <dl>
+    <dt>Watch <kbd>1</kbd> <kbd>2</kbd></dt><dd>Overview and Ground cameras. Drag to turn, wheel or right-drag to zoom, middle-drag to tilt. <kbd>Esc</kbd> comes back here from any mode</dd>
+    <dt>Select</dt><dd>Click a vehicle to select it, and click open ground to clear</dd>
+    <dt>Follow <kbd>F</kbd></dt><dd>The camera rides behind the selected vehicle. Drag and zoom to move it round the vehicle</dd>
+    <dt>Drive <kbd>E</kbd></dt><dd>Your baggage tractor. <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows; <kbd>S</kbd> brakes then reverses; steering at a standstill turns slowly on the spot. 25 km/h cap (assumed). Vehicles you block wait, then reroute after 10 s if the roads allow; the time they lose is the delay counter. Late vehicles push the turn's off-block back</dd>
+    <dt>Walk <kbd>X</kbd></dt><dd>From the centre of the view. <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk, <kbd>Q</kbd> <kbd>E</kbd> turn, <kbd>Shift</kbd> runs, <kbd>Space</kbd> jumps, drag to look. You cannot walk through vehicles or the aircraft; the traffic keeps to its schedule. Click a vehicle to ride along, click again to step off</dd>
+    <dt>Mark</dt><dd>Every detector event lands in the list on the right: give it a verdict (valid, false alarm, unsure). <kbd>N</kbd> flags something the detector missed. Click an event to look at it. Export writes the eval set as JSON</dd>
+    <dt>Time</dt><dd><kbd>Space</kbd> plays or pauses, <kbd>[</kbd> <kbd>]</kbd> change speed, drag the timeline to jump (a jump replays the schedule without your driving). The demo plays two turnarounds with a gap, then loops</dd>
+    <dt>Views</dt><dd><kbd>L</kbd> legend, <kbd>K</kbd> events, <kbd>C</kbd> hides every panel, <kbd>H</kbd> this panel</dd>
+    <dt>Sources</dt><dd>Task times, doors and service points: Airbus A320 Aircraft Characteristics (AC), with the Boeing 737 airport planning document as a cross-check. Vehicle models: CC BY 4.0. Aircraft model: GPLv2. All credited in the README</dd>
+  </dl>
+</div>
+
+<div id="veil"></div>
+<div id="title" class="glass"><p class="go">Loading the stand</p></div>
+
+<script type="module" src="src/app/app.js"></script>
+</body>
+</html>

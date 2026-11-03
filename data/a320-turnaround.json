@@ -58,8 +58,8 @@
     { "id": "bulk_load",     "label": "Bulk hold load (500 kg)",     "equipment": "CB",   "at": "bulk_cargo_door", "start": 36.3, "end": 40.5, "remove": [40.5, 42], "after": ["bulk_unload"], "read": "derived" },
     { "id": "waste_water",   "label": "Toilet servicing",            "equipment": "LV",   "at": "waste_water_panel", "position": [0, 2], "start": 2, "end": 6, "remove": [6, 8], "after": [], "read": "chart" },
     { "id": "potable_water", "label": "Potable water (200 l)",       "equipment": "WV",   "at": "potable_water_panel", "position": [8, 10], "start": 10, "end": 15, "remove": [15, 17], "after": ["waste_water"], "read": "chart" },
-    { "id": "gpu",           "label": "Ground power",                "equipment": "GPU",  "at": "ground_power", "start": 0, "end": 42, "after": [], "read": "stated", "note": "t = t0 for other equipment" },
-    { "id": "pca",           "label": "Air conditioning, one hose",  "equipment": "AC",   "at": "lp_air", "start": 0, "end": 42, "after": [], "read": "stated" },
+    { "id": "gpu",           "label": "Ground power",                "equipment": "GPU",  "at": "ground_power", "position": [0, 1], "start": 1, "end": 42, "after": [], "read": "game", "note": "manual: other equipment starts at t0 but is not charted; hook-up minute and end are our assumption" },
+    { "id": "pca",           "label": "Air conditioning, one hose",  "equipment": "AC",   "at": "lp_air", "position": [0, 1], "start": 1, "end": 42, "after": [], "read": "game", "note": "as ground power" },
     { "id": "pushback",      "label": "Tug connects, off-blocks",    "equipment": "TOW",  "at": "nose_gear", "position": [40, 42], "start": 44.2, "end": 44.2, "after": ["pbb_remove", "fwd_load", "aft_load", "bulk_load", "gpu", "pca"], "read": "game", "note": "manual ends at bridge removal; tug timing is our assumption" }
   ],
   "vehicles": {
