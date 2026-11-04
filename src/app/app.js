@@ -524,8 +524,14 @@ function view(name, dur, done) {
   if (!dur) { cam.lookAt(tgt, off); cam.lookAtTransform(C.Matrix4.IDENTITY); return; }
   cam.flyToBoundingSphere(new C.BoundingSphere(tgt, 1), { offset: off, duration: dur, easingFunction: C.EasingFunction.QUADRATIC_IN_OUT, complete: done, cancel: done });
 }
-const INTRO = { t: [0, -22, 0], h: 20, p: -24, r: 330 }, INTRO_DEG_S = 3, FLY_S = 3.5;
-function orbitIntro(dt) { INTRO.h = (INTRO.h + dt * INTRO_DEG_S) % 360; view(INTRO); }
+// the opening, as in the earlier replay: a slow wide orbit behind the prompt. After one full round the camera flies
+// in by itself; a key or a click flies it in sooner
+const INTRO = { t: [0, -22, 0], h: 20, p: -24, r: 330, turned: 0 }, INTRO_DEG_S = 10, FLY_S = 3.5;
+function orbitIntro(dt) {
+  const d = Math.min(dt * INTRO_DEG_S, 360 - INTRO.turned);
+  INTRO.turned += d; INTRO.h = (INTRO.h + d) % 360; view(INTRO);
+  if (INTRO.turned >= 360) start(true);
+}
 const showPrompt = () => { $('title').querySelector('.go').textContent = 'Press any key to begin'; document.body.classList.add('ready'); };
 function start(fly) {
   if (started || intro) return;
@@ -646,10 +652,10 @@ function walkStep() {                              // walking runs in real time,
 }
 function walkCam(dt) {
   const r = [Math.sin(walker.h), -Math.cos(walker.h)], moving = walker.speed > 0;
-  const amp = (walker.run ? 0.09 : 0.05) * walker.bobK, dip = -Math.abs(Math.cos(walker.bob)) * amp, sway = Math.sin(walker.bob) * amp * 0.7;
-  cam.frustum.fov += (FOV0 * (walker.run && moving ? 1.13 : 1) - cam.frustum.fov) * Math.min(1, dt * 6);
+  const amp = (walker.run ? 0.03 : 0.016) * walker.bobK, dip = -Math.abs(Math.cos(walker.bob)) * amp, sway = Math.sin(walker.bob) * amp * 0.5;   // a gentle bob
+  cam.frustum.fov += (FOV0 * (walker.run && moving ? 1.06 : 1) - cam.frustum.fov) * Math.min(1, dt * 4);
   cam.setView({ destination: P(walker.x + r[0] * sway, walker.y + r[1] * sway, WALK.eye + amp * 0.5 + dip + walker.z - walker.land),
-    orientation: { heading: bearingOf(walker.h), pitch: C.Math.toRadians(walker.p), roll: sway * 0.35 } });
+    orientation: { heading: bearingOf(walker.h), pitch: C.Math.toRadians(walker.p), roll: sway * 0.12 } });
 }
 let look = null, downAt = null;
 viewer.canvas.addEventListener('pointerdown', (ev) => { downAt = [ev.clientX, ev.clientY]; if (MODE === 'walk') look = { x: ev.clientX, y: ev.clientY, h: walker.h, p: walker.p }; });

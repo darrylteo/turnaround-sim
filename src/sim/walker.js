@@ -32,7 +32,7 @@ export function stepWalker(w, input = {}, dt, env = {}) {
   w.jumpHeld = !!K.jump;
   if (w.z > 0 || w.vz > 0) {
     w.z += w.vz * dt - WALK.gravity * dt * dt / 2; w.vz -= WALK.gravity * dt;   // exact under constant gravity
-    if (w.z <= 0) { w.z = 0; w.vz = 0; w.land = 0.14; }
+    if (w.z <= 0) { w.z = 0; w.vz = 0; w.land = 0.06; }   // a small dip on landing
   } else w.land = Math.max(0, w.land - dt * 0.9);
   return w;
 }
