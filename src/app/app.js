@@ -110,18 +110,20 @@ function buildStand() {
 
 /* ---------- the aircraft: the A320 model (GPLv2, credited in the README), scaled to the manual's length ---------- */
 const AC = { model: null };
-const AC_GLB = { uri: 'models/a320.glb', noseZ: 22.44, tailZ: -15.83, wheelY: -0.78 };   // the model's own extents (glTF metres)
+// the model's own extents (glTF metres): its nose is at -z and its tail at +z, so it is turned half round
+const AC_GLB = { uri: 'models/a320.glb', noseZ: -15.83, tailZ: 22.44, wheelY: -0.78 };
 async function buildAircraft() {
   AC.model = await loadModel(AC_GLB.uri, { show: false });
-  AC.scale = table.dimensions.length_m / (AC_GLB.noseZ - AC_GLB.tailZ);
+  AC.scale = table.dimensions.length_m / (AC_GLB.tailZ - AC_GLB.noseZ);
 }
 function placeAircraft(a) {
   if (!AC.model) return;
   AC.model.show = a.phase !== 'absent';
   if (!AC.model.show) return;
-  const s = AC.scale, back = AC_GLB.noseZ * s;     // the model's origin sits this far behind the nose
-  const [X, Y, Z] = flat(a.h);
-  AC.model.modelMatrix = frame(new C.Matrix4(), [a.nx - X[0] * back, a.ny - X[1] * back, -AC_GLB.wheelY * s], X, Y, Z, [s, s, s]);
+  const s = AC.scale, back = -AC_GLB.noseZ * s;    // the model's origin sits this far behind the nose
+  const fx = Math.cos(a.h), fy = Math.sin(a.h);
+  const [X, Y, Z] = flat(a.h + Math.PI);
+  AC.model.modelMatrix = frame(new C.Matrix4(), [a.nx - fx * back, a.ny - fy * back, -AC_GLB.wheelY * s], X, Y, Z, [s, s, s]);
 }
 
 /* ---------- jet bridge (illustrative), as in the earlier replay: rotunda, two telescoping tunnels, cab, bogie ---------- */

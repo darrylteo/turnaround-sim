@@ -38,6 +38,29 @@ export function scanText(text, hashes) {
   return hits;
 }
 
+// The only text an image carries is its metadata: PNG tEXt/zTXt/iTXt chunks and GIF comment and application blocks.
+// Pixel bytes are noise and would match short terms by chance.
+function imageText(buf) {
+  const out = [];
+  if (buf.subarray(1, 4).toString('latin1') === 'PNG') {
+    for (let i = 8; i + 8 <= buf.length;) {
+      const len = buf.readUInt32BE(i), type = buf.subarray(i + 4, i + 8).toString('latin1');
+      if (/^(tEXt|zTXt|iTXt)$/.test(type)) out.push(buf.subarray(i + 8, i + 8 + len).toString('latin1'));
+      i += 12 + len;
+    }
+  } else {                                       // GIF: walk the blocks, keeping comment and application data
+    const table = (flags) => (flags & 0x80 ? 3 * 2 ** ((flags & 7) + 1) : 0);
+    const skipSub = (j, keep) => { for (; j < buf.length && buf[j]; j += buf[j] + 1) if (keep) out.push(buf.subarray(j + 1, j + 1 + buf[j]).toString('latin1')); return j + 1; };
+    let i = 13 + table(buf[10]);
+    while (i < buf.length && buf[i] !== 0x3b) {
+      if (buf[i] === 0x21) i = skipSub(i + 2, buf[i + 1] === 0xfe || buf[i + 1] === 0xff);
+      else if (buf[i] === 0x2c) i = skipSub(i + 10 + table(buf[i + 9]) + 1, false);
+      else break;
+    }
+  }
+  return out.join('\n');
+}
+
 export const loadHashes = () => new Set(JSON.parse(readFileSync(HASHES, 'utf8')).sha256);
 
 export function scanRepo({ root = ROOT, hashes = loadHashes() } = {}) {
@@ -49,6 +72,7 @@ export function scanRepo({ root = ROOT, hashes = loadHashes() } = {}) {
     const buf = readFileSync(join(root, f));
     let text = buf.toString('latin1');
     if (f.endsWith('.glb')) text = buf.subarray(20, 20 + buf.readUInt32LE(12)).toString('utf8');   // a model: its glTF JSON
+    else if (/\.(png|gif)$/.test(f)) text = imageText(buf);                                        // an image: its text metadata
     else if (text.includes('\0')) text = (text.match(/[\x20-\x7e]{8,}/g) || []).join('\n');      // other binary: its readable strings
     for (const h of scanText(text, hashes)) hits.push({ where: f, ...h });
   }
