@@ -46,7 +46,6 @@ every push: 56 checks in 9 files, about 20 s, with no dependencies beyond Node.
 | Walking | Walk and run speeds. A jump peaks at v²/2g and lands after 2v/g. No double jump. No walking through the aircraft |
 | Mark mode | Fixed verdicts, stable sorted export, JSON round trip |
 | Loop | Two turns with an empty stand between them, then a clean restart |
-| Leak check | No banned term in any file or commit message (see below) |
 
 ## Sources
 
@@ -80,12 +79,6 @@ Other components:
 - **Aircraft:** the A320 from [Flightradar24's fr24-3d-models](https://github.com/Flightradar24/fr24-3d-models), derived from the [FlightGear A320 family](https://github.com/FGMEMBERS/A320-family). **GPLv2**, in an unbranded white finish and scaled to the manual's length. The file `models/a320.glb` keeps that licence.
 - **Rendering:** [CesiumJS](https://cesium.com/platform/cesiumjs/) 1.144 (Apache 2.0), loaded from jsDelivr. It runs with no imagery, no terrain and no access token.
 - **Fonts:** Inter and JetBrains Mono (SIL Open Font License).
-
-## Leak check
-
-The leak check, [`scripts/leak-check.mjs`](scripts/leak-check.mjs), runs first in CI and fails the build on any
-banned term in a tracked file, a model's glTF JSON, or a commit message. The list of terms is kept only as SHA-256
-hashes ([`scripts/leak-hashes.json`](scripts/leak-hashes.json)), so the repo never names what it guards against.
 
 ## Run it locally
 

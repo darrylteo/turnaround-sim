@@ -652,10 +652,10 @@ function walkStep() {                              // walking runs in real time,
 }
 function walkCam(dt) {
   const r = [Math.sin(walker.h), -Math.cos(walker.h)], moving = walker.speed > 0;
-  const amp = (walker.run ? 0.03 : 0.016) * walker.bobK, dip = -Math.abs(Math.cos(walker.bob)) * amp, sway = Math.sin(walker.bob) * amp * 0.5;   // a gentle bob
+  const amp = (walker.run ? 0.065 : 0.035) * walker.bobK, dip = -Math.abs(Math.cos(walker.bob)) * amp, sway = Math.sin(walker.bob) * amp * 0.6;   // a visible but gentle bob
   cam.frustum.fov += (FOV0 * (walker.run && moving ? 1.06 : 1) - cam.frustum.fov) * Math.min(1, dt * 4);
   cam.setView({ destination: P(walker.x + r[0] * sway, walker.y + r[1] * sway, WALK.eye + amp * 0.5 + dip + walker.z - walker.land),
-    orientation: { heading: bearingOf(walker.h), pitch: C.Math.toRadians(walker.p), roll: sway * 0.12 } });
+    orientation: { heading: bearingOf(walker.h), pitch: C.Math.toRadians(walker.p), roll: sway * 0.25 } });
 }
 let look = null, downAt = null;
 viewer.canvas.addEventListener('pointerdown', (ev) => { downAt = [ev.clientX, ev.clientY]; if (MODE === 'walk') look = { x: ev.clientX, y: ev.clientY, h: walker.h, p: walker.p }; });
